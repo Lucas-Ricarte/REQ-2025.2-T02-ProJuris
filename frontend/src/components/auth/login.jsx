@@ -20,7 +20,7 @@ const Login = () => {
     try {
       const user = await login(email, senha);
       
-      if (user.role === 'socio') {
+            if (user.role === 'socio' || user.role === 'admin') {
         navigate('/dashboard-socio');
       } else {
         navigate('/dashboard-funcionario');

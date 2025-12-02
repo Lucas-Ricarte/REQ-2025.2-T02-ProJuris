@@ -29,11 +29,18 @@ const PrivateRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    if (user.role === 'socio') {
-      return <Navigate to="/dashboard-socio" />;
-    } else {
-      return <Navigate to="/dashboard-funcionario" />;
+    if (requiredRole) {
+    let hasAccess = user.role === requiredRole;
+    if (requiredRole === 'socio' && user.role === 'admin') {
+      hasAccess = true;
+    }
+
+    if (!hasAccess) {
+      if (user.role === 'socio' || user.role === 'admin') {
+        return <Navigate to="/dashboard-socio" />;
+      } else {
+        return <Navigate to="/dashboard-funcionario" />;
+      }
     }
   }
 

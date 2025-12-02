@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from config import Config
+from app.models import User
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -20,25 +21,50 @@ def create_app(config_class=Config):
     app = Flask(__name__, static_folder='../../../frontend/build', static_url_path='/')
     app.config.from_object(config_class)
 
-    # Configuração do CORS
     CORS(app, resources={
+
+
         r"/*": { 
+
+
             "origins": ["http://localhost:3000"],
+
+
             "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+
+
             "allow_headers": ["Content-Type", "Authorization"],
+
+
             "supports_credentials": True
         }
     })
-
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
 
+    with app.app_context():
+        db.create_all()
+        if not User.query.filter_by(email='admin@projuris.com').first():
+            admin_user = User(
+                nome='Admin ProJuris',
+                email='admin@projuris.com',
+                cpf='00000000000',
+                role='admin'
+            )
+
+            admin_user.password = 'admin'
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Usuário admin@projuris.com criado com sucesso.")
+
     from app.auth import bp as auth_bp
+
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from app.main import bp as main_bp
+
     app.register_blueprint(main_bp)
 
     return app

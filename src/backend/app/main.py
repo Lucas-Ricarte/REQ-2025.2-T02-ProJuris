@@ -171,7 +171,7 @@ def import_demandas(current_user):
         - relatório: Estatísticas da importação
     """
     # 1. Verifica permissão (apenas sócios podem importar em lote)
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Apenas sócios podem importar demandas em lote.'}), 403
     
     # 2. Verifica se arquivo foi enviado
@@ -238,7 +238,7 @@ def confirmar_import_demandas(current_user):
         - ignorar_duplicatas: Boolean para pular duplicatas
     """
     # 1. Verifica permissão
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Apenas sócios podem importar demandas em lote.'}), 403
     
     data = request.get_json()
@@ -380,7 +380,7 @@ def update_demanda(current_user, demanda_id):
         return jsonify({'message': 'Demanda não encontrada.'}), 404
     
     # Verifica se o usuário tem permissão (sócio pode editar todas, funcionário só as suas)
-    if current_user.role != 'socio' and demanda.responsavel_id != current_user.id:
+    if current_user.role not in ['socio', 'admin'] and demanda.responsavel_id != current_user.id:
         return jsonify({'message': 'Você não tem permissão para editar esta demanda.'}), 403
     
     data = request.get_json()
@@ -405,7 +405,7 @@ def update_demanda(current_user, demanda_id):
         demanda.prioridade = data['prioridade'] 
     
     # Apenas sócio pode reatribuir demandas
-    if 'responsavel_id' in data and current_user.role == 'socio':
+    if 'responsavel_id' in data and current_user.role in ['socio', 'admin']:
         responsavel_antigo_id = demanda.responsavel_id
         responsavel = User.query.get(data['responsavel_id'])
         if not responsavel:
@@ -463,7 +463,7 @@ def patch_demanda_status(current_user, demanda_id):
         return jsonify({'message': 'Demanda não encontrada.'}), 404
     
     # 2. Verifica permissão (Sócio pode alterar todas; Funcionário só pode alterar as suas)
-    if current_user.role != 'socio' and demanda.responsavel_id != current_user.id:
+    if current_user.role not in ['socio', 'admin'] and demanda.responsavel_id != current_user.id:
         return jsonify({'message': 'Você não tem permissão para alterar o status desta demanda.'}), 403
     
     data = request.get_json()
@@ -504,7 +504,7 @@ def patch_demanda_status(current_user, demanda_id):
         # REGRA 3: Se está movendo PARA coluna de REVISÃO, criar notificação para sócios
         if coluna_destino.tipo_coluna == 'revisao':
             # Busca todos os sócios para notificar
-            socios = User.query.filter_by(role='socio').all()
+            socios = User.query.filter(User.role.in_(['socio', 'admin'])).all()
             for socio in socios:
                 # Verifica se já existe notificação idêntica nos últimos 10 segundos (evita duplicatas)
                 limite_tempo = datetime.utcnow() - timedelta(seconds=10)
@@ -600,7 +600,7 @@ def get_demanda(current_user, demanda_id):
 @token_required
 def delete_demanda(current_user, demanda_id):
     # RNF01: Apenas sócios podem excluir demandas
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Acesso negado. Apenas sócios podem excluir demandas.'}), 403
     
     demanda = Demanda.query.get(demanda_id)
@@ -657,7 +657,7 @@ def get_kanban_columns(current_user):
 @token_required
 def create_kanban_column(current_user):
     # Apenas sócios podem criar colunas
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Acesso negado. Apenas sócios podem gerenciar colunas.'}), 403
     
     data = request.get_json()
@@ -707,7 +707,7 @@ def create_kanban_column(current_user):
 @token_required
 def update_kanban_column(current_user, coluna_id):
     # Apenas sócios podem editar colunas
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Acesso negado. Apenas sócios podem gerenciar colunas.'}), 403
     
     coluna = KanbanColumn.query.get(coluna_id)
@@ -756,7 +756,7 @@ def update_kanban_column(current_user, coluna_id):
 @token_required
 def delete_kanban_column(current_user, coluna_id):
     # Apenas sócios podem deletar colunas
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Acesso negado. Apenas sócios podem gerenciar colunas.'}), 403
     
     coluna = KanbanColumn.query.get(coluna_id)
@@ -1093,7 +1093,7 @@ def gerar_relatorio_pdf(current_user):
 def get_auditoria(current_user):
     """Lista logs de auditoria - Apenas sócios têm acesso completo"""
     # RNF01: Apenas sócios podem acessar logs completos de auditoria
-    if current_user.role != 'socio':
+    if current_user.role not in ['socio', 'admin']:
         return jsonify({'message': 'Acesso negado. Apenas sócios podem consultar logs de auditoria.'}), 403
     
     # Parâmetros de filtro opcionais
