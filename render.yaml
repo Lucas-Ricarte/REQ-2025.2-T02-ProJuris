@@ -16,3 +16,5 @@ services:
         value: "src/backend/run.py"
       - key: FLASK_ENV
         value: production
+      - key: DATABASE_URL
+        value: postgresql://dbprojuris_user:ER79gWSXU0XhoRCz03q92QewRaXOegno@dpg-d4n655k9c44c738i8tb0-a/dbprojuris
